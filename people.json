@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Karel",
+    "surname": "Novak",
+    "age": 23,
+    "id": 1
+  },
+  {
+    "name": "Roman",
+    "surname": "Cizek",
+    "id": 2,
+    "age": 18
+  },
+  {
+    "name": "Roman",
+    "surname": "Cizek",
+    "id": 3,
+    "age": 20
+  },
+  {
+    "name": "Tomas",
+    "surname": "Stuchlik",
+    "id": 4,
+    "age": 16
+  }
+]

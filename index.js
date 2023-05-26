@@ -4,9 +4,45 @@ const AdmZip = require("adm-zip");
 const beautify = require("json-beautify");
 const { forEach } = require("jszip");
 
-const whitelistParams = ["age", "name", "surname"];
+const whitelistParams = ["age", "name", "surname", "email", "telephone"];
 
 const server = express();
+
+function validateID(req, res, next) {
+  const personID = Number.parseInt(req.params.id);
+  if (personID && personID >= 0) next();
+  else return res.status(400).send("non valid id");
+}
+
+function validateCompressed(req, res, next) {
+  const { compressed } = req.query;
+  if (compressed !== "true" && compressed !== "false") {
+    return res.status(400).send();
+  }
+  next();
+}
+
+function compressedToBool(req, res, next) {
+  const compressed = req.query;
+  if (compressed === "true") req.query = true;
+
+  req.query = false;
+  next();
+}
+
+function idToInt(req, res, next) {
+  req.params.id = Number.parseInt(req.params.id);
+  next();
+}
+
+function validatePostBody(req, res, next) {
+  if (req.body.name && req.body.surname && req.body.telephone && req.body.email)
+    next();
+
+  return res
+    .status(400)
+    .send("Fill all parameters: name, surname, telephone, email");
+}
 
 server.listen(3000, function () {
   console.log("alive");
@@ -18,37 +54,35 @@ server.use(express.json());
 server.get("/people", (req, res, next) => {
   const listPeople = fs.readFileSync("people.json", "utf-8");
   if (listPeople === "") return res.status(204).send();
-  return res.status(200).json(JSON.parse());
+  return res.status(200).json(JSON.parse(listPeople));
 });
 
 //download normal or compressed file
-server.get("/people/file", (req, res, next) => {
-  const { compressed } = req.query;
-  const zip = new AdmZip();
-  console.log(compressed);
-  if (compressed !== true && compressed !== false) {
-    return res.status(400).send();
+server.get(
+  "/people/file",
+  validateCompressed,
+  compressedToBool,
+  (req, res, next) => {
+    const compressed = req.query;
+    console.log(req.query);
+    const zip = new AdmZip();
+    if (!compressed) {
+      return res.download("people.json");
+    }
+    const data = fs.readFileSync("people.json");
+    const inBuffer = Buffer.from(data, "utf8");
+    zip.addFile("people.json", inBuffer);
+    res.set({
+      "Content-Type": "application/zip",
+      "Content-Disposition": 'attachment; filename="people.zip"',
+    });
+    return res.send(zip.toBuffer());
   }
-  if (compressed === "false") {
-    return res.download("people.json");
-  }
-  const data = fs.readFileSync("people.json");
-  const inBuffer = Buffer.from(data, "utf8");
-  zip.addFile("people.json", inBuffer);
-  res.set({
-    "Content-Type": "application/zip",
-    "Content-Disposition": 'attachment; filename="people.zip"',
-  });
-  res.send(zip.toBuffer());
-});
+);
 
 //return 1 person from people
-server.get("/people/:id", (req, res, next) => {
-  const personID = Number.parseInt(req.params.id);
-  if (!Number.isInteger(personID)) {
-    next();
-  }
-
+server.get("/people/:id", validateID, idToInt, (req, res, next) => {
+  const personID = req.params.id;
   const peopleArray = JSON.parse(fs.readFileSync("people.json", "utf-8"));
   const person = peopleArray.find((person) => person.id === personID);
   console.log(person);
@@ -57,19 +91,10 @@ server.get("/people/:id", (req, res, next) => {
 });
 
 //add 1 person
-server.post("/people", (req, res) => {
+server.post("/people", validatePostBody, (req, res) => {
   const peopleData = fs.readFileSync("people.json", "utf-8");
   const peopleArray = JSON.parse(peopleData);
   const id = Number.parseInt(peopleArray[peopleArray.length - 1].id) + 1;
-  const isBodyValid = req.body.name && req.body.surname;
-  if (!isBodyValid) {
-    return res
-      .status(400)
-      .send(
-        "ID must be int and bigger than 0,\nname is required,\nsurname is required"
-      );
-  }
-
   const human = { id };
   for (const k of Object.keys(req.body)) {
     if (whitelistParams.includes(k)) {
@@ -82,22 +107,12 @@ server.post("/people", (req, res) => {
 });
 
 //edit 1 person
-server.put("/people/:id", (req, res) => {
+server.put("/people/:id", validateID, idToInt, (req, res) => {
   const peopleArray = JSON.parse(fs.readFileSync("people.json", "utf-8"));
-  const personID = Number.parseInt(req.params.id);
-  const isBodyValid =
-    personID && personID >= 0 ;
+  const personID = req.params.id;
   const person = peopleArray.find((person) => person.id === personID);
-  if (!person)
-    return res.status(404).send();
-  console.log(person);
-  if (!isBodyValid) {
-    return res
-      .status(400)
-      .send(
-        "ID must be int and bigger than 0,\nname is required,\nsurname is required"
-      );
-  }
+  if (!person) return res.status(404).send();
+
   const index = peopleArray.indexOf(person);
   Object.keys(req.body).forEach((key) => {
     if (whitelistParams.includes(key)) {
@@ -109,12 +124,10 @@ server.put("/people/:id", (req, res) => {
 });
 
 //delete 1 person
-server.delete("/people/:id", (req, res) => {
-  const personID = Number.parseInt(req.params.id);
-  const isIDValid = personID && personID >= 0;
-  if (!isIDValid) return res.status(400).send("ID must be integer!!");
-  const person = peopleArray.find((person) => person.id === personID);
+server.delete("/people/:id", validateID, idToInt, (req, res) => {
+  const personID = req.params.id;
   const peopleArray = JSON.parse(fs.readFileSync("people.json", "utf-8"));
+  const person = peopleArray.find((person) => person.id === personID);
   if (!person) return res.status(404).send();
   const deleted = peopleArray.splice(peopleArray.indexOf(person), 1);
   fs.writeFileSync("people.json", beautify(peopleArray, null, 2, 50), "utf-8");

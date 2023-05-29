@@ -7,7 +7,7 @@ const {
   downloadPeopleList,
   removePerson,
 } = require("./controlers/people");
-const server = express();
+
 const {
   validateID,
   validateCompressed,
@@ -16,11 +16,17 @@ const {
   validatePostBody,
 } = require("./middleware/people");
 
+const  {fetchData}  = require("./controlers/jsonplaceholder");
+
+const server = express();
+
 server.listen(3000, function () {
   console.log("alive");
 });
 
 server.use(express.json());
+
+server.get("/todos", fetchData);
 
 //return whole list of people
 server.get("/people", fetchPeople);

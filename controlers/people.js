@@ -1,7 +1,7 @@
 const fs = require("fs");
 const AdmZip = require("adm-zip");
 const beautify = require("json-beautify");
-const whitelistParams = ["age", "name", "surname", "email", "telephone"];
+const whitelistParams = ["age", "name", "surname", "email", "telephone","password"];
 
 function createPerson(req, res) {
   const peopleData = fs.readFileSync("people.json", "utf-8");

@@ -16,6 +16,8 @@ const {
   validatePostBody,
 } = require("./middleware/people");
 
+const {transformCompleted, validateUserId} = require("./middleware/jsonplaceholder");
+
 const  {fetchData}  = require("./controlers/jsonplaceholder");
 
 const server = express();
@@ -26,7 +28,7 @@ server.listen(3000, function () {
 
 server.use(express.json());
 
-server.get("/todos", fetchData);
+server.get("/todos",transformCompleted,validateUserId, fetchData);
 
 //return whole list of people
 server.get("/people", fetchPeople);

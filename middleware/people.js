@@ -3,6 +3,14 @@ function validateID(req, res, next) {
     if (personID && personID >= 0) next();
     else return res.status(400).send("non valid id");
   }
+
+function validatePassword(req, res, next){
+  const password = req.body.password;
+  if (password)
+  next();
+
+  return res.status(400).send();
+}
   
   function validateCompressed(req, res, next) {
     const { compressed } = req.query;

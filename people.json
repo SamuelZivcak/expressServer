@@ -9,7 +9,8 @@
     "name": "Roman",
     "surname": "Cizek",
     "id": 2,
-    "age": 18
+    "age": 18,
+    "password": "hashiuh"
   },
   {
     "name": "Roman",
@@ -30,5 +31,14 @@
     "age": 34,
     "telephone": "1354125545",
     "email": "ajiogwhfu@jaogiuzhbqn"
+  },
+  {
+    "id": 6,
+    "name": "Nekdo",
+    "surname": "novak",
+    "age": 34,
+    "telephone": "1354125545",
+    "email": "ajiogwhfu@jaogiuzhbqn",
+    "password": "$2b$04$AbSSEJ.WLonutPDRiJrdAu/R/F6VW3dZOer05oLSLkt0WlKvw9/x."
   }
 ]

@@ -1,20 +1,35 @@
 const fs = require("fs");
 const AdmZip = require("adm-zip");
 const beautify = require("json-beautify");
-const whitelistParams = ["age", "name", "surname", "email", "telephone","password"];
+const whitelistParams = [
+  "age",
+  "name",
+  "surname",
+  "email",
+  "telephone",
+  "password",
+];
+const bcrypt = require("bcrypt");
+const { error } = require("console");
 
-function createPerson(req, res) {
+async function createPerson(req, res) {
   const peopleData = fs.readFileSync("people.json", "utf-8");
   const peopleArray = JSON.parse(peopleData);
   const id = Number.parseInt(peopleArray[peopleArray.length - 1].id) + 1;
   const human = { id };
   for (const k of Object.keys(req.body)) {
     if (whitelistParams.includes(k)) {
-      human[k] = req.body[k];
+      try {
+        if (k === "password") human[k] = await bcrypt.hash(req.body[k], 3);
+        else human[k] = req.body[k];
+      } catch {
+        (error) => console.log(error);
+      }
     }
   }
   peopleArray.push(human);
   fs.writeFileSync("people.json", beautify(peopleArray, null, 2, 50), "utf-8");
+  console.log(human);
   return res.status(201).send();
 }
 function fetchPerson(req, res, next) {
@@ -71,4 +86,11 @@ function fetchPeople(req, res, next) {
   return res.status(200).json(JSON.parse(listPeople));
 }
 
-module.exports = {fetchPeople, fetchPerson, editPerson, createPerson, downloadPeopleList,removePerson};
+module.exports = {
+  fetchPeople,
+  fetchPerson,
+  editPerson,
+  createPerson,
+  downloadPeopleList,
+  removePerson,
+};

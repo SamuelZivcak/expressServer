@@ -3,22 +3,31 @@ function validateUserId(req, res, next) {
   if (userId && userId >= 0) {
     req.query.userId = parseInt(userId);
     next();
-  }
-  return res.status(400).send();
+  } else return res.status(400).send();
 }
 
 function transformCompleted(req, res, next) {
   const completed = req.query.completed;
+  if (!completed) {
+    return next();
+  }
   if (completed !== "true" && completed !== "false") {
     return res.status(400).send();
   }
 
-  if(completed === "true")
-  req.query.completed = true;
-  else
-  req.query.completed = false;
+  req.query.completed = completed === "true";
 
   next();
 }
 
-module.exports = { transformCompleted, validateUserId };
+function validateOnlyText(req, res, next) {
+  const textOnly = req.query.textOnly;
+  if (!textOnly) return next();
+  if (textOnly !== "true" && textOnly !== "false") {
+    return res.status(400).send();
+  }
+  req.query.textOnly = textOnly === "true";
+  next();
+}
+
+module.exports = { transformCompleted, validateUserId, validateOnlyText };
